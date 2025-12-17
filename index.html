@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>3交替 日勤換算時計</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="title" id="appTitle">3交替 日勤換算時計</div>
+    <button class="icon-btn" id="settingsBtn" aria-label="設定">
+      <!-- simple gear icon (inline svg) -->
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+        <path fill="currentColor" d="M19.14,12.94c0.04-0.31,0.06-0.63,0.06-0.94s-0.02-0.63-0.06-0.94l2.03-1.58
+          c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.11-0.2-0.36-0.28-0.57-0.2l-2.39,0.96c-0.5-0.38-1.04-0.7-1.64-0.94
+          L14.4,2.81C14.37,2.6,14.18,2.44,13.96,2.44h-3.92c-0.22,0-0.41,0.16-0.44,0.37L9.23,5.37C8.63,5.61,8.09,5.93,7.59,6.31
+          L5.2,5.35c-0.21-0.08-0.46,0-0.57,0.2L2.71,8.87c-0.11,0.2-0.06,0.47,0.12,0.61l2.03,1.58C4.82,11.37,4.8,11.69,4.8,12
+          s0.02,0.63,0.06,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.11,0.2,0.36,0.28,0.57,0.2l2.39-0.96
+          c0.5,0.38,1.04,0.7,1.64,0.94l0.37,2.56c0.03,0.21,0.22,0.37,0.44,0.37h3.92c0.22,0,0.41-0.16,0.44-0.37l0.37-2.56
+          c0.6-0.24,1.14-0.56,1.64-0.94l2.39,0.96c0.21,0.08,0.46,0,0.57-0.2l1.92-3.32c0.11-0.2,0.06-0.47-0.12-0.61L19.14,12.94z
+          M12,15.5c-1.93,0-3.5-1.57-3.5-3.5S10.07,8.5,12,8.5s3.5,1.57,3.5,3.5S13.93,15.5,12,15.5z"/>
+      </svg>
+    </button>
+  </header>
+
+  <main class="main">
+    <section class="clock-wrap" aria-label="時計">
+      <div class="status-row">
+        <div class="clock-sub" id="shiftStatus">早番（-1.5h）</div>
+        <div class="meridiem" id="meridiem" aria-label="AM/PM">AM</div>
+      </div>
+
+      <!-- SVG clock -->
+      <svg id="clock" class="clock" viewBox="0 0 200 200" role="img" aria-label="アナログ時計">
+        <!-- outer circle -->
+        <circle cx="100" cy="100" r="92" class="clock-face" />
+        <!-- hour ticks -->
+        <g id="ticks"></g>
+
+        <!-- hands -->
+        <g id="hands">
+          <line id="hourHand" x1="100" y1="100" x2="100" y2="58" class="hand hour" />
+          <line id="minuteHand" x1="100" y1="100" x2="100" y2="38" class="hand minute" />
+          <circle cx="100" cy="100" r="4" class="pin" />
+        </g>
+      </svg>
+
+      <div class="assist" id="assistText">
+        ※ 端末時刻 + 勤務オフセット（分単位更新）
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottom">
+    <button class="shift-btn" id="shiftBtn" type="button">早番</button>
+  </footer>
+
+  <!-- settings modal -->
+  <div class="modal-backdrop" id="modalBackdrop" hidden></div>
+  <dialog class="modal" id="settingsModal" aria-label="設定">
+    <form method="dialog" class="modal-form" id="settingsForm">
+      <div class="modal-header">
+        <div class="modal-title" id="settingsTitle">設定</div>
+        <button class="icon-btn" id="closeSettingsBtn" value="close" aria-label="閉じる">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="field">
+          <label class="label" for="langSelect" id="langLabel">言語</label>
+          <select id="langSelect">
+            <option value="ja">日本語</option>
+            <option value="en">English</option>
+          </select>
+          <div class="hint" id="langHint">※MVPは日本語/英語のみ</div>
+        </div>
+
+        <div class="field">
+          <div class="label" id="previewLabel">プレビュー</div>
+          <div class="preview" id="previewText">端末 00:00 → 換算 00:00</div>
+          <div class="hint" id="previewHint">換算時刻 = 端末時刻 + オフセット</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <div class="label" id="offsetLabel">勤務オフセット（時間）</div>
+          <div class="grid">
+            <label for="offsetEarly" id="earlyLabel">早番</label>
+            <input id="offsetEarly" type="number" step="0.5" inputmode="decimal" />
+            <label for="offsetNight" id="nightLabel">夜勤</label>
+            <input id="offsetNight" type="number" step="0.5" inputmode="decimal" />
+            <label for="offsetLate" id="lateLabel">遅番</label>
+            <input id="offsetLate" type="number" step="0.5" inputmode="decimal" />
+          </div>
+          <div class="hint" id="offsetHint">例：-1.5 / 6.5 / 16.5（小数は0.5刻み推奨）</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <div class="label" id="orderLabel">切替順（固定）</div>
+          <div class="hint" id="orderHint">早番 → 夜勤 → 遅番 → 早番 …</div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn secondary" type="button" id="resetBtn">初期値に戻す</button>
+        <button class="btn primary" type="button" id="saveBtn">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="./app.js"></script>
+</body>
+</html>
